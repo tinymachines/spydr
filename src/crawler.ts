@@ -13,6 +13,7 @@ export interface StealthOptions {
   headersRealistic?: boolean;
   launchArgs?: boolean;
   contextOptions?: boolean;
+  rootDomainPreload?: boolean;
   all?: boolean;
 }
 
@@ -64,6 +65,7 @@ function getStealthConfig(stealth?: boolean | StealthOptions): StealthOptions {
       headersRealistic: true,
       launchArgs: true,
       contextOptions: true,
+      rootDomainPreload: true,
       all: true
     };
   }
@@ -79,12 +81,48 @@ function getStealthConfig(stealth?: boolean | StealthOptions): StealthOptions {
       headersRealistic: true,
       launchArgs: true,
       contextOptions: true,
+      rootDomainPreload: true,
       all: true
     };
   }
   
   // Return the specific configuration
   return stealth as StealthOptions;
+}
+
+async function performRootDomainPreload(page: Page, targetUrl: string, options: CrawlOptions): Promise<void> {
+  try {
+    // Extract root domain from target URL
+    const parsedUrl = new URL(targetUrl);
+    const rootDomain = `${parsedUrl.protocol}//${parsedUrl.hostname}`;
+    
+    if (options.debug) {
+      console.log(`Debug: Preloading root domain: ${rootDomain}`);
+    }
+    
+    // Navigate to root domain first to establish session and cookies
+    const rootResponse = await page.goto(rootDomain, { 
+      waitUntil: 'networkidle',
+      timeout: options.timeout || 30000
+    });
+    
+    if (options.debug) {
+      console.log(`Debug: Root domain loaded with HTTP ${rootResponse?.status() || 'unknown'}`);
+    }
+    
+    // Wait a bit for any cookies/session to be established
+    await page.waitForTimeout(1500);
+    
+    if (options.debug) {
+      console.log('Debug: Root domain preload completed, session/cookies established');
+    }
+    
+  } catch (error) {
+    if (options.debug) {
+      console.log(`Debug: Root domain preload failed: ${error}`);
+    }
+    // Don't throw - we'll continue with normal crawling even if preload fails
+  }
 }
 
 export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise<CrawlResult> {
@@ -300,6 +338,11 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
       if (options.debug) {
         console.log(`Debug: Set page timeout to ${options.timeout}ms`);
       }
+    }
+    
+    // Perform root domain preloading if enabled
+    if (stealthConfig.rootDomainPreload) {
+      await performRootDomainPreload(page, url, options);
     }
     
     // Navigate to the URL and wait for network to be idle

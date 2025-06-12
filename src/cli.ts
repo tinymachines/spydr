@@ -32,11 +32,13 @@ Available Stealth Features:
   headersRealistic=on|off  Add realistic HTTP headers
   launchArgs=on|off        Use stealth browser launch arguments
   contextOptions=on|off    Use stealth browser context options
+  rootDomainPreload=on|off Preload root domain before crawling target URL
 
 Examples:
   spydr crawl https://example.com --stealth
   spydr crawl https://example.com -o "webdriver=on" -o "plugins=on"
   spydr crawl https://example.com --stealth -o "headersRealistic=off"
+  spydr crawl https://meatball.ai/pasta?search=rigatoni -o "rootDomainPreload=on"
   spydr help-stealth       Show this help message
 `);
 }
@@ -142,6 +144,10 @@ program
               case 'contextoptions':
               case 'context-options':
                 stealthConfig.contextOptions = boolValue;
+                break;
+              case 'rootdomainpreload':
+              case 'root-domain-preload':
+                stealthConfig.rootDomainPreload = boolValue;
                 break;
               default:
                 console.error(`Unknown stealth option: ${key}`);

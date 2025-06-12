@@ -5,7 +5,8 @@ A powerful TypeScript-based web crawler using Playwright with advanced stealth c
 ## 🚀 Features
 
 - **Cross-browser support** (Chromium, Firefox, WebKit)
-- **Advanced stealth mode** with granular control over detection-avoidance features
+- **Advanced stealth mode** with granular control over 9 detection-avoidance features
+- **Root domain preloading** for session establishment and cookie handling
 - **Database tracking** with SQLite backend for URL and link management
 - **SHA-based file naming** for consistent content organization
 - **Screenshot capture** with full-page scrolling
@@ -230,9 +231,40 @@ spydr crawl https://example.com -o "webdriver=on" -o "plugins=on"
 # Stealth with selective overrides
 spydr crawl https://example.com --stealth -o "headersRealistic=off"
 
+# Root domain preloading for session establishment
+spydr crawl https://meatball.ai/pasta?search=rigatoni -o "rootDomainPreload=on"
+
 # Get stealth help
 spydr help-stealth
 ```
+
+### Root Domain Preloading
+
+Root domain preloading is a stealth feature that helps establish browser sessions and cookies by visiting the root domain before crawling the target URL. This technique can help bypass certain detection mechanisms and maintain consistent browser state.
+
+#### How It Works
+1. **Extract root domain**: From `https://example.com/deep/page` → `https://example.com`
+2. **Preload root domain**: Navigate to root domain first, accept all cookies
+3. **Maintain session**: Use same browser context for target URL crawl
+4. **Preserve cookies**: All cookies and session data remain consistent
+
+#### Example Usage
+```bash
+# Enable root domain preloading specifically
+spydr crawl https://site.com/protected/page -o "rootDomainPreload=on" --debug
+
+# Included automatically with full stealth mode
+spydr crawl https://site.com/api/data --stealth --debug
+
+# Combine with other stealth features
+spydr crawl https://site.com/content -o "rootDomainPreload=on" -o "webdriver=on"
+```
+
+#### When to Use
+- **Cookie-dependent sites**: Sites that require initial cookie establishment
+- **Session-based authentication**: Pages that need session context from root domain
+- **Anti-bot detection**: Sites that check for consistent browsing patterns
+- **Complex web applications**: SPAs that initialize state from root domain
 
 ### Network & Debug Options
 ```bash
@@ -291,6 +323,7 @@ spydr crawl https://example.com --proxy "http://user:pass@proxy.com:8080"
 - `headersRealistic=on|off` - Add realistic HTTP headers
 - `launchArgs=on|off` - Use stealth browser launch arguments
 - `contextOptions=on|off` - Use stealth browser context options
+- `rootDomainPreload=on|off` - Preload root domain before crawling target URL
 
 ## 📁 Output Structure
 
@@ -466,7 +499,8 @@ MIT License - see LICENSE file for details
 ## 📋 Changelog
 
 ### v2.0.0 (Latest)
-- **Advanced Stealth Mode** - Granular control over 8 detection-avoidance features
+- **Advanced Stealth Mode** - Granular control over 9 detection-avoidance features
+- **Root Domain Preloading** - Establish sessions by visiting root domain before target URL
 - **Database Integration** - SQLite tracking with crawled_sites and links tables
 - **SHA-based Naming** - Consistent file naming using URL hashes
 - **Network Interface Binding** - Route traffic through specific interfaces
