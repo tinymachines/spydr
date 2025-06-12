@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  spydr:
+    build: .
+    container_name: spydr
+    volumes:
+      # Mount output directory to host
+      - ./crawl-output:/app/crawl-output
+      # Mount database to host for persistence
+      - ./crawl.db:/app/crawl.db
+    environment:
+      # Default environment variables
+      - SPYDR_HEADLESS=true
+      - SPYDR_TIMEOUT=30000
+      - SPYDR_BROWSER=chromium
+    command: >
+      sh -c "
+      echo 'Spydr container ready!'
+      echo 'Usage: docker-compose exec spydr node dist/cli.js crawl <URL> [options]'
+      echo 'Example: docker-compose exec spydr node dist/cli.js crawl https://example.com --stealth'
+      tail -f /dev/null
+      "
+    # Uncomment to run a specific crawl on startup
+    # command: ["node", "dist/cli.js", "crawl", "https://example.com", "--stealth"]
+
+  # Optional: Run specific crawl jobs
+  spydr-job:
+    build: .
+    profiles: ["job"]  # Only run when explicitly specified
+    volumes:
+      - ./crawl-output:/app/crawl-output
+      - ./crawl.db:/app/crawl.db
+    environment:
+      - SPYDR_HEADLESS=true
+      - SPYDR_STEALTH=true
+    # Override command when running: docker-compose --profile job run spydr-job [command]

@@ -18,20 +18,192 @@ A powerful TypeScript-based web crawler using Playwright with advanced stealth c
 
 ## 📦 Installation
 
+### Prerequisites - System Dependencies
+
+Playwright requires certain system libraries to run browsers. Install them based on your distribution:
+
+#### Ubuntu/Debian (20.04/22.04/24.04)
+```bash
+# Update package list
+sudo apt update
+
+# Install required dependencies
+sudo apt install -y \
+  libgtk-4-1 \
+  libwoff1 \
+  libvpx7 \
+  libgstreamer-plugins-bad1.0-0 \
+  libflite1 \
+  libharfbuzz-icu0 \
+  libenchant-2-2 \
+  libsecret-1-0 \
+  libhyphen0 \
+  libmanette-0.2-0 \
+  libgles2 \
+  libx264-dev \
+  libgstreamer1.0-0 \
+  libgstreamer-plugins-base1.0-0
+
+# Alternative: Install all Playwright dependencies automatically
+npx playwright install-deps
+```
+
+#### Fedora/RHEL/CentOS
+```bash
+# Install required dependencies
+sudo dnf install -y \
+  gtk4 \
+  woff2 \
+  libvpx \
+  gstreamer1-plugins-bad-free \
+  flite \
+  harfbuzz-icu \
+  enchant2 \
+  libsecret \
+  hyphen \
+  libmanette \
+  mesa-libGLES \
+  x264-libs
+
+# Alternative: Install all Playwright dependencies automatically
+npx playwright install-deps
+```
+
+#### Arch Linux
+```bash
+# Install required dependencies
+sudo pacman -S --needed \
+  gtk4 \
+  woff2 \
+  libvpx \
+  gst-plugins-bad \
+  flite \
+  harfbuzz-icu \
+  enchant \
+  libsecret \
+  hyphen \
+  libmanette \
+  libgles \
+  x264
+```
+
+#### Alpine Linux
+```bash
+# Install required dependencies
+apk add --no-cache \
+  gtk4.0 \
+  woff2 \
+  libvpx \
+  gst-plugins-bad \
+  flite \
+  harfbuzz-icu \
+  enchant2 \
+  libsecret \
+  hyphen \
+  libmanette \
+  mesa-gles \
+  x264-libs
+```
+
+### Project Installation
+
 ```bash
 # Clone the repository
 git clone git@github.com:tinymachines/spydr.git
 cd spydr
 
-# Install dependencies
+# Install Node.js dependencies
 npm install
 
 # Install browser binaries
 npx playwright install
 
+# If you encounter dependency issues, run:
+npx playwright install-deps
+
 # Build the project
 npm run build
 ```
+
+### Docker Alternative
+
+If you prefer to avoid system dependencies, you can run Spydr in Docker:
+
+#### Using Docker Compose (Recommended)
+```bash
+# Clone the repository
+git clone git@github.com:tinymachines/spydr.git
+cd spydr
+
+# Build and start container
+docker-compose up -d
+
+# Run crawls using the container
+docker-compose exec spydr node dist/cli.js crawl https://example.com --stealth
+
+# Run with debug mode
+docker-compose exec spydr node dist/cli.js crawl https://example.com --debug
+
+# Stop container
+docker-compose down
+```
+
+#### Using Docker directly
+```bash
+# Build the image
+docker build -t spydr .
+
+# Run a crawl
+docker run --rm \
+  -v $(pwd)/crawl-output:/app/crawl-output \
+  -v $(pwd)/crawl.db:/app/crawl.db \
+  spydr node dist/cli.js crawl https://example.com --stealth
+
+# Run interactively
+docker run -it --rm \
+  -v $(pwd)/crawl-output:/app/crawl-output \
+  spydr bash
+```
+
+#### Pre-built Docker Image
+```bash
+# Pull from registry (when available)
+docker pull tinymachines/spydr:latest
+
+# Run directly
+docker run --rm \
+  -v $(pwd)/crawl-output:/app/crawl-output \
+  tinymachines/spydr:latest \
+  node dist/cli.js crawl https://example.com --stealth
+```
+
+### Troubleshooting Dependencies
+
+1. **Check missing dependencies:**
+   ```bash
+   npx playwright install --dry-run
+   ```
+
+2. **Install specific browser dependencies:**
+   ```bash
+   # For Chromium only
+   npx playwright install-deps chromium
+   
+   # For Firefox only
+   npx playwright install-deps firefox
+   
+   # For WebKit only
+   npx playwright install-deps webkit
+   ```
+
+3. **Verify installation:**
+   ```bash
+   # Test basic functionality
+   npx playwright --version
+   
+   # Run a simple test
+   node -e "console.log(require('playwright').chromium.executablePath())"
+   ```
 
 ## 🔧 Usage
 
@@ -194,6 +366,90 @@ spydr crawl https://problematic-site.com \
   --timeout 30000 \
   --headless false
 ```
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+#### Missing System Dependencies
+```bash
+# Error: "Host system is missing dependencies to run browsers"
+# Solution: Install system dependencies for your distribution
+
+# Ubuntu/Debian
+sudo apt install -y $(npx playwright install-deps --dry-run 2>&1 | grep -oP '(?<=apt install -y ).*')
+
+# Or use the automatic installer
+npx playwright install-deps
+```
+
+#### Browser Installation Issues
+```bash
+# Error: "Executable doesn't exist at /path/to/browser"
+# Solution: Reinstall browsers
+npx playwright install --force
+
+# Install specific browser only
+npx playwright install chromium --force
+```
+
+#### Permission Issues
+```bash
+# Error: "EACCES: permission denied"
+# Solution: Check file permissions
+chmod +x dist/cli.js
+
+# Or run with node directly
+node dist/cli.js crawl https://example.com
+```
+
+#### Network/Timeout Issues
+```bash
+# Use debug mode to diagnose
+spydr crawl https://example.com --debug --timeout 30000
+
+# Try different network interface
+spydr crawl https://example.com --interface eth0 --debug
+
+# Test with simple sites first
+spydr crawl https://httpbin.org/get --debug
+```
+
+#### Database Issues
+```bash
+# Error: "SQLITE_CANTOPEN" or similar
+# Solution: Check file permissions and disk space
+ls -la crawl.db
+df -h .
+
+# Remove and recreate database
+rm crawl.db*
+spydr crawl https://example.com
+```
+
+### Getting Help
+
+1. **Enable debug mode** for detailed logging:
+   ```bash
+   spydr crawl https://example.com --debug
+   ```
+
+2. **Check system requirements**:
+   ```bash
+   node --version  # Should be 16+
+   npx playwright --version
+   ```
+
+3. **Verify installation**:
+   ```bash
+   npm run build
+   node dist/cli.js --help
+   ```
+
+4. **Test with minimal configuration**:
+   ```bash
+   spydr crawl https://httpbin.org/get --headless --timeout 10000
+   ```
 
 ## 🤝 Contributing
 
