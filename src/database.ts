@@ -125,13 +125,22 @@ export class CrawlDatabase {
   async insertLinks(crawledSiteId: number, links: string[]): Promise<void> {
     if (links.length === 0) return;
     
-    // Insert links one by one to avoid parameter limit issues
-    for (const link of links) {
-      const linkHash = this.generateUrlHash(link);
-      await this.runStatement(`
-        INSERT INTO links (crawled_site_id, url, url_hash)
-        VALUES (?, ?, ?)
-      `, [crawledSiteId, link, linkHash]);
+    // Use transaction for batch insertion for better performance
+    await this.runStatement('BEGIN TRANSACTION');
+    
+    try {
+      // Prepare statement for reuse
+      const stmt = `INSERT INTO links (crawled_site_id, url, url_hash) VALUES (?, ?, ?)`;
+      
+      for (const link of links) {
+        const linkHash = this.generateUrlHash(link);
+        await this.runStatement(stmt, [crawledSiteId, link, linkHash]);
+      }
+      
+      await this.runStatement('COMMIT');
+    } catch (error) {
+      await this.runStatement('ROLLBACK');
+      throw error;
     }
   }
 

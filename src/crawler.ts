@@ -147,7 +147,7 @@ async function performRootDomainPreload(page: Page, targetUrl: string, options: 
     
     // Navigate to root domain first to establish session and cookies
     const rootResponse = await page.goto(rootDomain, { 
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: options.timeout || 30000
     });
     
@@ -407,10 +407,10 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
     // Navigate to the URL and wait for network to be idle
     if (options.debug) {
       console.log(`Debug: Starting navigation to ${url}`);
-      console.log(`Debug: Waiting for networkidle event...`);
+      console.log(`Debug: Waiting for DOM content loaded...`);
     }
     
-    const response = await page.goto(url, { waitUntil: 'networkidle' });
+    const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
     const httpCode = response?.status() || 0;
     
     if (options.debug) {
@@ -418,21 +418,36 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
     }
     
     // Extract raw HTML (initial response)
+    if (options.debug) {
+      console.log('Debug: Extracting raw HTML content...');
+    }
     const rawHtml = await page.content();
     
     // Wait a bit more for any dynamic content to load
+    if (options.debug) {
+      console.log('Debug: Waiting for dynamic content to load...');
+    }
     await page.waitForTimeout(2000);
     
     // Extract rendered HTML (DOM after JS execution)
+    if (options.debug) {
+      console.log('Debug: Extracting rendered HTML content...');
+    }
     const renderedHtml = await page.content();
     
     // Extract all links from the rendered page
+    if (options.debug) {
+      console.log('Debug: Extracting links...');
+    }
     const links = await page.evaluate(() => {
       const anchors = Array.from(document.querySelectorAll('a[href]'));
       return anchors.map(anchor => (anchor as HTMLAnchorElement).href).filter(href => href);
     });
     
     // Extract plain text version of the page
+    if (options.debug) {
+      console.log('Debug: Extracting text content...');
+    }
     const textContent = await page.evaluate(() => {
       // Remove script and style elements
       const scripts = document.querySelectorAll('script, style');
@@ -456,28 +471,72 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
     await fs.mkdir(outputDir, { recursive: true });
     
     // Auto-scroll to capture full page content (with reasonable limit)
+    if (options.debug) {
+      console.log('Debug: Starting auto-scroll...');
+    }
     await autoScroll(page);
+    if (options.debug) {
+      console.log('Debug: Auto-scroll completed');
+    }
     
     // Save all files using URL hash instead of timestamp
+    if (options.debug) {
+      console.log('Debug: Taking screenshot...');
+    }
     const screenshotPath = path.join(outputDir, `crawl-${urlHash}.png`);
-    await page.screenshot({ 
-      path: screenshotPath, 
-      fullPage: true 
-    });
+    try {
+      await page.screenshot({ 
+        path: screenshotPath, 
+        fullPage: true,
+        timeout: 30000
+      });
+    } catch (error) {
+      if (options.debug) {
+        console.log('Debug: Full page screenshot failed, trying viewport screenshot:', error);
+      }
+      // Fallback to viewport screenshot if full page fails
+      await page.screenshot({ 
+        path: screenshotPath,
+        timeout: 15000
+      });
+    }
+    if (options.debug) {
+      console.log('Debug: Screenshot saved');
+    }
     
+    if (options.debug) {
+      console.log('Debug: Saving raw HTML...');
+    }
     const rawHtmlPath = path.join(outputDir, `raw-${urlHash}.html`);
     await fs.writeFile(rawHtmlPath, rawHtml, 'utf-8');
     
+    if (options.debug) {
+      console.log('Debug: Saving rendered HTML...');
+    }
     const renderedHtmlPath = path.join(outputDir, `rendered-${urlHash}.html`);
     await fs.writeFile(renderedHtmlPath, renderedHtml, 'utf-8');
     
+    if (options.debug) {
+      console.log('Debug: Saving links...');
+    }
     const linksPath = path.join(outputDir, `links-${urlHash}.json`);
     await fs.writeFile(linksPath, JSON.stringify(links, null, 2), 'utf-8');
     
+    if (options.debug) {
+      console.log('Debug: Saving text content...');
+    }
     const textPath = path.join(outputDir, `text-${urlHash}.txt`);
-    await fs.writeFile(textPath, textContent, 'utf-8');
+    // Limit text content size to prevent memory issues
+    const maxTextSize = 1000000; // 1MB limit
+    const truncatedText = textContent.length > maxTextSize 
+      ? textContent.substring(0, maxTextSize) + '\n\n[Content truncated due to size limit]'
+      : textContent;
+    await fs.writeFile(textPath, truncatedText, 'utf-8');
     
     // Save crawl data to database
+    if (options.debug) {
+      console.log('Debug: Saving to database...');
+    }
     const crawledSite: CrawledSite = {
       timestamp: new Date().toISOString(),
       url: url,
@@ -490,6 +549,9 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
     
     // Save discovered links to database
     if (links.length > 0) {
+      if (options.debug) {
+        console.log(`Debug: Saving ${links.length} links to database...`);
+      }
       await crawlDb.insertLinks(crawlId, links);
     }
     
@@ -531,15 +593,26 @@ async function autoScroll(page: Page): Promise<void> {
   await page.evaluate(async () => {
     await new Promise<void>((resolve) => {
       let totalHeight = 0;
+      let iterations = 0;
       const distance = 100;
       const maxHeight = 50000; // Reasonable limit to prevent infinite scrolling
+      const maxIterations = 500; // Maximum iterations to prevent hanging
+      const maxTime = 30000; // Maximum time in milliseconds (30 seconds)
+      
+      const startTime = Date.now();
       
       const timer = setInterval(() => {
         const scrollHeight = document.body.scrollHeight;
         window.scrollBy(0, distance);
         totalHeight += distance;
+        iterations++;
         
-        if (totalHeight >= scrollHeight || totalHeight >= maxHeight) {
+        const elapsed = Date.now() - startTime;
+        
+        if (totalHeight >= scrollHeight || 
+            totalHeight >= maxHeight || 
+            iterations >= maxIterations ||
+            elapsed >= maxTime) {
           clearInterval(timer);
           resolve();
         }
