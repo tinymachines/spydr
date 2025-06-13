@@ -34,6 +34,8 @@ export interface CrawlOptions {
   };
   networkInterface?: string;
   debug?: boolean;
+  cookiesPersistent?: boolean;
+  overwriteData?: boolean;
 }
 
 export interface CrawlResult {
@@ -47,6 +49,49 @@ export interface CrawlResult {
   timestamp: string;
   httpCode: number;
   crawlId: number;
+}
+
+async function getCookiesFilePath(domain: string): Promise<string> {
+  const cookiesDir = path.join(process.cwd(), 'cookies');
+  await fs.mkdir(cookiesDir, { recursive: true });
+  const sanitizedDomain = domain.replace(/[^a-zA-Z0-9.-]/g, '_');
+  return path.join(cookiesDir, `${sanitizedDomain}.json`);
+}
+
+async function saveCookies(context: BrowserContext, domain: string, debug?: boolean): Promise<void> {
+  try {
+    const cookies = await context.cookies();
+    const cookiesFilePath = await getCookiesFilePath(domain);
+    
+    if (debug) {
+      console.log(`Debug: Saving ${cookies.length} cookies to ${cookiesFilePath}`);
+    }
+    
+    await fs.writeFile(cookiesFilePath, JSON.stringify(cookies, null, 2), 'utf-8');
+  } catch (error) {
+    if (debug) {
+      console.log(`Debug: Failed to save cookies: ${error}`);
+    }
+  }
+}
+
+async function loadCookies(context: BrowserContext, domain: string, debug?: boolean): Promise<void> {
+  try {
+    const cookiesFilePath = await getCookiesFilePath(domain);
+    
+    const cookiesData = await fs.readFile(cookiesFilePath, 'utf-8');
+    const cookies = JSON.parse(cookiesData);
+    
+    if (debug) {
+      console.log(`Debug: Loading ${cookies.length} cookies from ${cookiesFilePath}`);
+    }
+    
+    await context.addCookies(cookies);
+  } catch (error) {
+    if (debug) {
+      console.log(`Debug: No existing cookies found for domain ${domain} or failed to load: ${error}`);
+    }
+  }
 }
 
 function getStealthConfig(stealth?: boolean | StealthOptions): StealthOptions {
@@ -134,9 +179,10 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
   
   // Check if we've already crawled this URL
   const existingSite = await crawlDb.getCrawledSite(urlHash);
-  if (existingSite) {
+  if (existingSite && !options.overwriteData) {
     console.log(`URL already crawled: ${url} (hash: ${urlHash})`);
     console.log(`Previous crawl: ${existingSite.timestamp} (ID: ${existingSite.id})`);
+    console.log('Use --overwrite-data to replace existing data');
     return {
       url,
       urlHash,
@@ -149,6 +195,12 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
       httpCode: existingSite.http_code,
       crawlId: existingSite.id!
     };
+  }
+  
+  // If overwrite is enabled and site exists, delete existing data
+  if (existingSite && options.overwriteData) {
+    console.log(`Overwriting existing data for URL: ${url} (hash: ${urlHash})`);
+    await crawlDb.deleteCrawledSiteData(urlHash);
   }
   
   // Select browser engine
@@ -269,6 +321,13 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
     }
 
     context = await browser.newContext(contextOptions);
+    
+    // Load existing cookies if persistent cookies are enabled
+    if (options.cookiesPersistent) {
+      const domain = new URL(url).hostname;
+      await loadCookies(context, domain, options.debug);
+    }
+    
     page = await context.newPage();
 
     // Add stealth scripts based on configuration
@@ -442,6 +501,13 @@ export async function crawlUrl(url: string, options: CrawlOptions = {}): Promise
     console.log(`✓ Text version saved to: ${textPath}`);
     console.log(`✓ Screenshot saved to: ${screenshotPath}`);
     console.log(`✓ Crawl data saved to database (ID: ${crawlId})`);
+    
+    // Save cookies if persistent cookies are enabled
+    if (options.cookiesPersistent && context) {
+      const domain = new URL(url).hostname;
+      await saveCookies(context, domain, options.debug);
+      console.log(`✓ Cookies saved for domain: ${domain}`);
+    }
     
     return {
       url,

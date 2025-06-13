@@ -143,6 +143,16 @@ export class CrawlDatabase {
     return result as CrawledSite || null;
   }
 
+  async deleteCrawledSiteData(urlHash: string): Promise<void> {
+    const site = await this.getCrawledSite(urlHash);
+    if (!site || !site.id) {
+      return;
+    }
+
+    await this.runStatement(`DELETE FROM links WHERE crawled_site_id = ?`, [site.id]);
+    await this.runStatement(`DELETE FROM crawled_sites WHERE url_hash = ?`, [urlHash]);
+  }
+
   async getAllCrawledSites(): Promise<CrawledSite[]> {
     const result = await this.runQuery(`
       SELECT * FROM crawled_sites ORDER BY timestamp DESC

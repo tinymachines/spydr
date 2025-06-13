@@ -67,6 +67,8 @@ program
   .option('--debug', 'Enable debug logging')
   .option('--stealth', 'Enable all stealth features')
   .option('-o, --option <key=value>', 'Set stealth option (use "help-stealth" for details)', collect, [])
+  .option('--cookies-persistent', 'Save cookies for domain reuse between crawl sessions')
+  .option('--overwrite-data', 'Overwrite existing records for this URL/hash instead of skipping')
   .action(async (url: string, options) => {
     try {
       // Parse viewport
@@ -172,7 +174,9 @@ program
         stealth,
         proxy,
         networkInterface: options.interface,
-        debug: options.debug
+        debug: options.debug,
+        cookiesPersistent: options.cookiesPersistent,
+        overwriteData: options.overwriteData
       };
 
       console.log(`Crawling: ${url}`);

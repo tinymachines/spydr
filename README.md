@@ -266,6 +266,18 @@ spydr crawl https://site.com/content -o "rootDomainPreload=on" -o "webdriver=on"
 - **Anti-bot detection**: Sites that check for consistent browsing patterns
 - **Complex web applications**: SPAs that initialize state from root domain
 
+### Data Management Options
+```bash
+# Save cookies for domain reuse between crawl sessions
+spydr crawl https://example.com --cookies-persistent
+
+# Overwrite existing data for a URL instead of skipping
+spydr crawl https://example.com --overwrite-data
+
+# Combined persistent crawling with overwrite
+spydr crawl https://example.com --cookies-persistent --overwrite-data
+```
+
 ### Network & Debug Options
 ```bash
 # Bind to specific network interface
@@ -299,6 +311,10 @@ spydr crawl https://example.com --proxy "http://user:pass@proxy.com:8080"
 - `--viewport <size>` - Browser viewport size (e.g., "1920x1080")
 - `--device <device>` - Device to emulate (e.g., "iPhone 12")
 - `--user-agent <string>` - Custom user agent string
+
+### Data Management
+- `--cookies-persistent` - Save cookies for domain reuse between crawl sessions
+- `--overwrite-data` - Overwrite existing records for this URL/hash instead of skipping
 
 ### Network & Interface
 - `--interface <name>` - Network interface to bind to (e.g., "eth0", "wlan0")
@@ -337,6 +353,9 @@ crawl-output/
     ├── rendered-{SHA}.html     # HTML after JavaScript execution
     ├── text-{SHA}.txt          # Plain text content
     └── links-{SHA}.json        # Extracted links
+
+cookies/                        # Persistent cookies (when --cookies-persistent is used)
+└── {domain}.json               # Cookies saved per domain
 ```
 
 ## 🗄️ Database
@@ -373,14 +392,21 @@ npx playwright install
 
 ## 📚 Examples
 
-### Complete Stealth Crawl
+### Complete Stealth Crawl with Persistent Cookies
 ```bash
 spydr crawl https://target-site.com \
   --stealth \
+  --cookies-persistent \
   --interface eth0 \
   --timeout 20000 \
   --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
   --viewport "1920x1080"
+```
+
+### Overwrite Existing Data
+```bash
+# Force re-crawl of previously crawled URLs
+spydr crawl https://example.com --overwrite-data --cookies-persistent
 ```
 
 ### Mobile Device Testing
@@ -501,6 +527,8 @@ MIT License - see LICENSE file for details
 ### v2.0.0 (Latest)
 - **Advanced Stealth Mode** - Granular control over 9 detection-avoidance features
 - **Root Domain Preloading** - Establish sessions by visiting root domain before target URL
+- **Persistent Cookies** - Save and reuse cookies between crawl sessions with `--cookies-persistent`
+- **Data Overwrite** - Force re-crawl of existing URLs with `--overwrite-data`
 - **Database Integration** - SQLite tracking with crawled_sites and links tables
 - **SHA-based Naming** - Consistent file naming using URL hashes
 - **Network Interface Binding** - Route traffic through specific interfaces
