@@ -1,0 +1,156 @@
+{
+  "method": "GET",
+  "url": "https://www.google.com/search?q=potato",
+  "httpVersion": "h3",
+  "headers": [
+    {
+      "name": ":authority",
+      "value": "www.google.com"
+    },
+    {
+      "name": ":method",
+      "value": "GET"
+    },
+    {
+      "name": ":path",
+      "value": "/search?q=potato"
+    },
+    {
+      "name": ":scheme",
+      "value": "https"
+    },
+    {
+      "name": "accept",
+      "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+    },
+    {
+      "name": "accept-encoding",
+      "value": "gzip, deflate, br, zstd, dcb, dcz"
+    },
+    {
+      "name": "accept-language",
+      "value": "en-US,en;q=0.9"
+    },
+    {
+      "name": "available-dictionary",
+      "value": ":L14saKJckZHQ5AIXgcpYfo/0GAytKoUpW1jqwHUOeqk=:"
+    },
+    {
+      "name": "cache-control",
+      "value": "no-cache"
+    },
+    {
+      "name": "downlink",
+      "value": "10"
+    },
+    {
+      "name": "pragma",
+      "value": "no-cache"
+    },
+    {
+      "name": "priority",
+      "value": "u=0, i"
+    },
+    {
+      "name": "rtt",
+      "value": "100"
+    },
+    {
+      "name": "sec-ch-prefers-color-scheme",
+      "value": "dark"
+    },
+    {
+      "name": "sec-ch-ua",
+      "value": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\""
+    },
+    {
+      "name": "sec-ch-ua-arch",
+      "value": "\"x86\""
+    },
+    {
+      "name": "sec-ch-ua-bitness",
+      "value": "\"64\""
+    },
+    {
+      "name": "sec-ch-ua-form-factors",
+      "value": "\"Desktop\""
+    },
+    {
+      "name": "sec-ch-ua-full-version",
+      "value": "\"136.0.7103.113\""
+    },
+    {
+      "name": "sec-ch-ua-full-version-list",
+      "value": "\"Chromium\";v=\"136.0.7103.113\", \"Google Chrome\";v=\"136.0.7103.113\", \"Not.A/Brand\";v=\"99.0.0.0\""
+    },
+    {
+      "name": "sec-ch-ua-mobile",
+      "value": "?0"
+    },
+    {
+      "name": "sec-ch-ua-model",
+      "value": "\"\""
+    },
+    {
+      "name": "sec-ch-ua-platform",
+      "value": "\"Linux\""
+    },
+    {
+      "name": "sec-ch-ua-platform-version",
+      "value": "\"6.11.0\""
+    },
+    {
+      "name": "sec-ch-ua-wow64",
+      "value": "?0"
+    },
+    {
+      "name": "sec-fetch-dest",
+      "value": "document"
+    },
+    {
+      "name": "sec-fetch-mode",
+      "value": "navigate"
+    },
+    {
+      "name": "sec-fetch-site",
+      "value": "none"
+    },
+    {
+      "name": "sec-fetch-user",
+      "value": "?1"
+    },
+    {
+      "name": "upgrade-insecure-requests",
+      "value": "1"
+    },
+    {
+      "name": "user-agent",
+      "value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+    },
+    {
+      "name": "x-browser-channel",
+      "value": "stable"
+    },
+    {
+      "name": "x-browser-copyright",
+      "value": "Copyright 2025 Google LLC. All rights reserved."
+    },
+    {
+      "name": "x-browser-validation",
+      "value": "ctYldj7UqvsGWB62N+qJrQZxvXA="
+    },
+    {
+      "name": "x-browser-year",
+      "value": "2025"
+    }
+  ],
+  "queryString": [
+    {
+      "name": "q",
+      "value": "potato"
+    }
+  ],
+  "cookies": [],
+  "headersSize": -1,
+  "bodySize": 0
+}
